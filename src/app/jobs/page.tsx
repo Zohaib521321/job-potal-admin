@@ -28,6 +28,26 @@ interface Category {
   name: string;
 }
 
+interface CategoriesApiResponse {
+  success: boolean;
+  data: Category[];
+}
+
+interface JobsApiResponse {
+  success: boolean;
+  data: Job[];
+  pagination: {
+    totalPages: number;
+  };
+}
+
+interface JobActionResponse {
+  success: boolean;
+  error?: {
+    message?: string;
+  };
+}
+
 export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -59,11 +79,12 @@ export default function Jobs() {
   useEffect(() => {
     fetchJobs();
     fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, filterStatus]);
 
   const fetchCategories = async () => {
     try {
-      const data = await apiGet('/api/categories?status=active');
+      const data = await apiGet<CategoriesApiResponse>('/api/categories?status=active');
       if (data.success) {
         setCategories(data.data);
       }
@@ -85,7 +106,7 @@ export default function Jobs() {
         params.append('search', searchTerm.trim());
       }
 
-      const data = await apiGet(`/api/jobs?${params}`);
+      const data = await apiGet<JobsApiResponse>(`/api/jobs?${params}`);
 
       if (data.success) {
         setJobs(data.data);
@@ -155,16 +176,14 @@ export default function Jobs() {
         ? `/api/jobs/${editingJob.id}`
         : '/api/jobs';
 
-      const method = editingJob ? 'PUT' : 'POST';
-
       const body = {
         ...formData,
         category_id: formData.category_id ? parseInt(formData.category_id) : null,
       };
 
       const data = editingJob 
-        ? await apiPut(url, body)
-        : await apiPost(url, body);
+        ? await apiPut<JobActionResponse>(url, body)
+        : await apiPost<JobActionResponse>(url, body);
 
       if (data.success) {
         await fetchJobs();
@@ -186,7 +205,7 @@ export default function Jobs() {
     }
 
     try {
-      const data = await apiDelete(`/api/jobs/${id}`);
+      const data = await apiDelete<JobActionResponse>(`/api/jobs/${id}`);
 
       if (data.success) {
         await fetchJobs();
@@ -201,7 +220,7 @@ export default function Jobs() {
 
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
-      const data = await apiPut(`/api/jobs/${id}`, { status: newStatus });
+      const data = await apiPut<JobActionResponse>(`/api/jobs/${id}`, { status: newStatus });
 
       if (data.success) {
         await fetchJobs();

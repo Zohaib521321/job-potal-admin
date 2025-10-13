@@ -11,6 +11,22 @@ interface Admin {
   role: string;
 }
 
+interface AuthVerifyResponse {
+  success: boolean;
+  data: Admin;
+}
+
+interface AuthLoginResponse {
+  success: boolean;
+  data: {
+    admin: Admin;
+    token: string;
+  };
+  error?: {
+    message?: string;
+  };
+}
+
 interface AuthContextType {
   admin: Admin | null;
   token: string | null;
@@ -65,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      const data = await response.json();
+      const data = await response.json() as AuthVerifyResponse;
 
       if (data.success) {
         setAdmin(data.data);
@@ -88,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const data = await apiPost('/api/auth/login', { email, password });
+      const data = await apiPost<AuthLoginResponse>('/api/auth/login', { email, password });
 
       if (data.success) {
         setAdmin(data.data.admin);

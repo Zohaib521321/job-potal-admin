@@ -17,6 +17,18 @@ interface ContactMessage {
   created_at: string;
 }
 
+interface ContactApiResponse {
+  success: boolean;
+  data: ContactMessage[];
+}
+
+interface ContactActionResponse {
+  success: boolean;
+  error?: {
+    message?: string;
+  };
+}
+
 export default function Contact() {
   const [allContacts, setAllContacts] = useState<ContactMessage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +42,7 @@ export default function Contact() {
   const fetchContactMessages = async () => {
     try {
       setIsLoading(true);
-      const data = await apiGet('/api/contact');
+      const data = await apiGet<ContactApiResponse>('/api/contact');
 
       if (data.success) {
         setAllContacts(data.data);
@@ -44,7 +56,7 @@ export default function Contact() {
 
   const handleApprove = async (id: number) => {
     try {
-      const data = await apiPut(`/api/contact/${id}/approve`, {});
+      const data = await apiPut<ContactActionResponse>(`/api/contact/${id}/approve`, {});
 
       if (data.success) {
         await fetchContactMessages();
@@ -63,7 +75,7 @@ export default function Contact() {
     }
 
     try {
-      const data = await apiPut(`/api/contact/${id}/reject`, {});
+      const data = await apiPut<ContactActionResponse>(`/api/contact/${id}/reject`, {});
 
       if (data.success) {
         await fetchContactMessages();
@@ -82,7 +94,7 @@ export default function Contact() {
     }
 
     try {
-      const data = await apiDelete(`/api/contact/${id}`);
+      const data = await apiDelete<ContactActionResponse>(`/api/contact/${id}`);
 
       if (data.success) {
         await fetchContactMessages();

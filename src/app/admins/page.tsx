@@ -16,6 +16,18 @@ interface Admin {
   updated_at: string;
 }
 
+interface AdminsApiResponse {
+  success: boolean;
+  data: Admin[];
+}
+
+interface AdminActionResponse {
+  success: boolean;
+  error?: {
+    message?: string;
+  };
+}
+
 export default function Admins() {
   const { admin: currentAdmin, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -52,7 +64,7 @@ export default function Admins() {
   const fetchAdmins = async () => {
     try {
       setIsLoading(true);
-      const data = await apiGet('/api/admins');
+      const data = await apiGet<AdminsApiResponse>('/api/admins');
 
       if (data.success) {
         setAdmins(data.data);
@@ -102,16 +114,14 @@ export default function Admins() {
         ? `/api/admins/${editingAdmin.id}`
         : '/api/admins';
 
-      const method = editingAdmin ? 'PUT' : 'POST';
-
       // For edit, only send password if it's provided
       const body = editingAdmin && !formData.password
         ? { username: formData.username, email: formData.email, role: formData.role }
         : formData;
 
       const data = editingAdmin
-        ? await apiPut(url, body)
-        : await apiPost(url, body);
+        ? await apiPut<AdminActionResponse>(url, body)
+        : await apiPost<AdminActionResponse>(url, body);
 
       if (data.success) {
         await fetchAdmins();
@@ -133,7 +143,7 @@ export default function Admins() {
     }
 
     try {
-      const data = await apiDelete(`/api/admins/${id}`);
+      const data = await apiDelete<AdminActionResponse>(`/api/admins/${id}`);
 
       if (data.success) {
         await fetchAdmins();

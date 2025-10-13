@@ -6,32 +6,49 @@
 export interface ApiError {
   message: string;
   statusCode?: number;
-  details?: any;
+  details?: unknown;
+}
+
+interface ErrorWithResponse {
+  response?: {
+    data?: {
+      error?: {
+        message?: string;
+        statusCode?: number;
+        details?: unknown;
+      };
+    };
+  };
+  message?: string;
+  statusCode?: number;
+  name?: string;
 }
 
 /**
  * Parse error from API response or catch block
  */
-export function parseError(error: any): ApiError {
+export function parseError(error: unknown): ApiError {
+  const err = error as ErrorWithResponse;
+  
   // API error response
-  if (error?.response?.data?.error) {
+  if (err?.response?.data?.error) {
     return {
-      message: error.response.data.error.message || 'An error occurred',
-      statusCode: error.response.data.error.statusCode,
-      details: error.response.data.error.details,
+      message: err.response.data.error.message || 'An error occurred',
+      statusCode: err.response.data.error.statusCode,
+      details: err.response.data.error.details,
     };
   }
 
   // Error with message property
-  if (error?.message) {
+  if (err?.message) {
     return {
-      message: error.message,
-      statusCode: error.statusCode,
+      message: err.message,
+      statusCode: err.statusCode,
     };
   }
 
   // Network error
-  if (error?.name === 'TypeError' && error.message?.includes('fetch')) {
+  if (err?.name === 'TypeError' && err.message?.includes('fetch')) {
     return {
       message: 'Network error. Please check your internet connection.',
       statusCode: 0,
@@ -39,7 +56,7 @@ export function parseError(error: any): ApiError {
   }
 
   // Rate limiting error
-  if (error?.statusCode === 429) {
+  if (err?.statusCode === 429) {
     return {
       message: 'Too many requests. Please wait a moment and try again.',
       statusCode: 429,
@@ -78,7 +95,7 @@ export function getUserFriendlyMessage(statusCode?: number, defaultMessage?: str
 /**
  * Log error for debugging (development only)
  */
-export function logError(error: any, context?: string) {
+export function logError(error: unknown, context?: string) {
   if (process.env.NODE_ENV === 'development') {
     console.group(`Error${context ? ` in ${context}` : ''}`);
     console.error('Error object:', error);
@@ -91,7 +108,7 @@ export function logError(error: any, context?: string) {
  * Handle API error with user notification
  */
 export function handleApiError(
-  error: any,
+  error: unknown,
   setError: (message: string) => void,
   context?: string
 ): void {
@@ -126,10 +143,10 @@ export function isValidEmail(email: string): boolean {
  * Validate required fields
  */
 export function validateRequired(
-  fields: Record<string, any>,
+  fields: Record<string, unknown>,
   fieldNames: string[]
 ): { isValid: boolean; missingFields: string[] } {
-  const missingFields = fieldNames.filter(field => !fields[field] || fields[field].toString().trim() === '');
+  const missingFields = fieldNames.filter(field => !fields[field] || String(fields[field]).trim() === '');
   
   return {
     isValid: missingFields.length === 0,
@@ -151,6 +168,10 @@ export function getValidationMessage(missingFields: string[]): string {
   return `Please fill in: ${formatted.join(', ')}`;
 }
 
+interface ErrorWithStatusCode {
+  statusCode?: number;
+}
+
 /**
  * Retry API request with exponential backoff
  */
@@ -159,16 +180,17 @@ export async function retryApiRequest<T>(
   maxRetries = 3,
   baseDelay = 1000
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await apiCall();
-    } catch (error: any) {
+    } catch (error) {
       lastError = error;
+      const err = error as ErrorWithStatusCode;
       
       // Don't retry client errors (4xx)
-      if (error?.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+      if (err?.statusCode && err.statusCode >= 400 && err.statusCode < 500) {
         throw error;
       }
 
@@ -185,4 +207,5 @@ export async function retryApiRequest<T>(
 
   throw lastError;
 }
+
 

@@ -11,7 +11,7 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-text-secondary text-sm">
-            © {currentYear} {settings.site_name || 'JobPortal'} Admin Panel. All rights reserved.
+            © {currentYear} {settings.site_name || 'JOB HUNT PK'} Admin Panel. All rights reserved.
           </p>
           
           {/* Social Media Links */}
@@ -76,4 +76,5 @@ export default function Footer() {
     </footer>
   );
 }
+
 

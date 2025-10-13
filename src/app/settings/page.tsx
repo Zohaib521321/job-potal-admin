@@ -16,6 +16,18 @@ interface Setting {
   description: string;
 }
 
+interface SettingsApiResponse {
+  success: boolean;
+  data: Setting[];
+}
+
+interface SettingsUpdateResponse {
+  success: boolean;
+  error?: {
+    message?: string;
+  };
+}
+
 export default function Settings() {
   const { admin: currentAdmin, isLoading: authLoading } = useAuth();
   const { refreshSettings } = useSettingsContext();
@@ -41,7 +53,7 @@ export default function Settings() {
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
-      const data = await apiGet('/api/settings/detailed');
+      const data = await apiGet<SettingsApiResponse>('/api/settings/detailed');
 
       if (data.success) {
         setSettings(data.data);
@@ -67,7 +79,7 @@ export default function Settings() {
     setErrorMessage('');
 
     try {
-      const data = await apiPut('/api/settings', { settings: formData });
+      const data = await apiPut<SettingsUpdateResponse>('/api/settings', { settings: formData });
 
       if (data.success) {
         setSuccessMessage('Settings saved successfully!');

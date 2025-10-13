@@ -16,6 +16,18 @@ interface Category {
   updated_at: string;
 }
 
+interface CategoriesApiResponse {
+  success: boolean;
+  data: Category[];
+}
+
+interface CategoryActionResponse {
+  success: boolean;
+  error?: {
+    message?: string;
+  };
+}
+
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,7 +45,7 @@ export default function Categories() {
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
-      const data = await apiGet('/api/categories');
+      const data = await apiGet<CategoriesApiResponse>('/api/categories');
       
       if (data.success) {
         setCategories(data.data);
@@ -80,12 +92,10 @@ export default function Categories() {
       const url = editingCategory 
         ? `/api/categories/${editingCategory.id}`
         : '/api/categories';
-      
-      const method = editingCategory ? 'PUT' : 'POST';
 
       const data = editingCategory
-        ? await apiPut(url, formData)
-        : await apiPost(url, formData);
+        ? await apiPut<CategoryActionResponse>(url, formData)
+        : await apiPost<CategoryActionResponse>(url, formData);
 
       if (data.success) {
         await fetchCategories();
@@ -107,7 +117,7 @@ export default function Categories() {
     }
 
     try {
-      const data = await apiDelete(`/api/categories/${id}`);
+      const data = await apiDelete<CategoryActionResponse>(`/api/categories/${id}`);
 
       if (data.success) {
         await fetchCategories();

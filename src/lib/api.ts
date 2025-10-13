@@ -3,7 +3,7 @@
  * Centralized API calls with API key authentication, error handling, and XSS prevention
  */
 
-import { parseError, sanitizeInput } from './errorHandler';
+import { sanitizeInput } from './errorHandler';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
@@ -30,24 +30,29 @@ function getHeaders(additionalHeaders?: Record<string, string>): HeadersInit {
 /**
  * Sanitize object values to prevent XSS
  */
-function sanitizeObject(obj: any): any {
+function sanitizeObject(obj: unknown): unknown {
   if (!obj) return obj;
   if (typeof obj === 'string') return sanitizeInput(obj);
   if (Array.isArray(obj)) return obj.map(sanitizeObject);
   if (typeof obj === 'object') {
-    const sanitized: any = {};
+    const sanitized: Record<string, unknown> = {};
     for (const key in obj) {
-      sanitized[key] = sanitizeObject(obj[key]);
+      sanitized[key] = sanitizeObject((obj as Record<string, unknown>)[key]);
     }
     return sanitized;
   }
   return obj;
 }
 
+interface ApiErrorResponse {
+  statusCode?: number;
+  details?: unknown;
+}
+
 /**
  * Generic API request function with error handling
  */
-export async function apiRequest<T = any>(
+export async function apiRequest<T = unknown>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
@@ -62,17 +67,17 @@ export async function apiRequest<T = any>(
     const data = await response.json();
 
     if (!response.ok) {
-      const error: any = new Error(data.error?.message || 'API request failed');
+      const error = new Error(data.error?.message || 'API request failed') as Error & ApiErrorResponse;
       error.statusCode = data.error?.statusCode || response.status;
       error.details = data.error?.details;
       throw error;
     }
 
     return data;
-  } catch (error: any) {
+  } catch (error) {
     // Network errors
-    if (error.name === 'TypeError' && !error.statusCode) {
-      const networkError: any = new Error('Network error. Please check your internet connection.');
+    if (error instanceof TypeError && !(error as ApiErrorResponse).statusCode) {
+      const networkError = new Error('Network error. Please check your internet connection.') as Error & ApiErrorResponse;
       networkError.statusCode = 0;
       throw networkError;
     }
@@ -83,16 +88,16 @@ export async function apiRequest<T = any>(
 /**
  * GET request
  */
-export async function apiGet<T = any>(endpoint: string): Promise<T> {
+export async function apiGet<T = unknown>(endpoint: string): Promise<T> {
   return apiRequest<T>(endpoint, { method: 'GET' });
 }
 
 /**
  * POST request with XSS prevention
  */
-export async function apiPost<T = any>(
+export async function apiPost<T = unknown>(
   endpoint: string,
-  body?: any
+  body?: unknown
 ): Promise<T> {
   // Sanitize body to prevent XSS
   const sanitizedBody = sanitizeObject(body);
@@ -106,9 +111,9 @@ export async function apiPost<T = any>(
 /**
  * PUT request with XSS prevention
  */
-export async function apiPut<T = any>(
+export async function apiPut<T = unknown>(
   endpoint: string,
-  body?: any
+  body?: unknown
 ): Promise<T> {
   // Sanitize body to prevent XSS
   const sanitizedBody = sanitizeObject(body);
@@ -122,7 +127,7 @@ export async function apiPut<T = any>(
 /**
  * DELETE request
  */
-export async function apiDelete<T = any>(endpoint: string): Promise<T> {
+export async function apiDelete<T = unknown>(endpoint: string): Promise<T> {
   return apiRequest<T>(endpoint, { method: 'DELETE' });
 }
 

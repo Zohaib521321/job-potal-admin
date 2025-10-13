@@ -22,6 +22,11 @@ interface Settings {
   [key: string]: string | undefined;
 }
 
+interface SettingsApiResponse {
+  success: boolean;
+  data: Settings;
+}
+
 interface SettingsContextType {
   settings: Settings;
   isLoading: boolean;
@@ -40,7 +45,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const fetchSettings = async () => {
     try {
-      const data = await apiGet('/api/settings');
+      const data = await apiGet<SettingsApiResponse>('/api/settings');
 
       if (data.success) {
         setSettings(data.data);

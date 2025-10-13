@@ -21,6 +21,22 @@ interface JobStats {
   closed_jobs: string;
 }
 
+interface JobsApiResponse {
+  success: boolean;
+  data: Job[];
+}
+
+interface JobStatsApiResponse {
+  success: boolean;
+  data: JobStats;
+}
+
+interface CategoriesApiResponse {
+  success: boolean;
+  data: unknown;
+  count: number;
+}
+
 export default function Dashboard() {
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
   const [stats, setStats] = useState<JobStats | null>(null);
@@ -36,19 +52,19 @@ export default function Dashboard() {
       setIsLoading(true);
       
       // Fetch recent jobs
-      const jobsData = await apiGet('/api/jobs?page=1&limit=5&status=all');
+      const jobsData = await apiGet<JobsApiResponse>('/api/jobs?page=1&limit=5&status=all');
       if (jobsData.success) {
         setRecentJobs(jobsData.data);
       }
 
       // Fetch job stats
-      const statsData = await apiGet('/api/jobs/stats/summary');
+      const statsData = await apiGet<JobStatsApiResponse>('/api/jobs/stats/summary');
       if (statsData.success) {
         setStats(statsData.data);
       }
 
       // Fetch categories count
-      const categoriesData = await apiGet('/api/categories');
+      const categoriesData = await apiGet<CategoriesApiResponse>('/api/categories');
       if (categoriesData.success) {
         setCategoriesCount(categoriesData.count);
       }
@@ -92,7 +108,7 @@ export default function Dashboard() {
       <main className="flex-1 ml-64 p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-text-secondary">Welcome back! Here's what's happening today.</p>
+          <p className="text-text-secondary">Welcome back! Here&apos;s what&apos;s happening today.</p>
         </div>
 
         {/* Stats Grid */}

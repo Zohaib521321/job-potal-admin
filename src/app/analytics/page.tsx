@@ -3,17 +3,9 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import StatCard from '@/components/StatCard';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
-import { fetchWithApiKey, API_URL } from '@/lib/api';
-
-// Get theme colors from CSS variables
-const getThemeColor = (varName: string) => {
-  if (typeof window !== 'undefined') {
-    return getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();
-  }
-  return '';
-};
+import { fetchWithApiKey } from '@/lib/api';
 
 const COLORS = {
   primary: 'var(--primary)',
@@ -25,12 +17,47 @@ const COLORS = {
   secondary: 'var(--text-secondary)',
 };
 
+interface JobsOverview {
+  total: string;
+  active: string;
+  pending: string;
+  closed: string;
+  total_views: string;
+  this_week: string;
+}
+
+interface CategoriesOverview {
+  total: string;
+  active: string;
+  total_jobs_in_categories: string;
+}
+
+interface FeedbackOverview {
+  total: string;
+  pending: string;
+  approved: string;
+  rejected: string;
+  this_week: string;
+}
+
+interface ContactOverview {
+  total: string;
+  pending: string;
+  approved: string;
+  rejected: string;
+  this_week: string;
+}
+
+interface CategoryRequestsOverview {
+  pending: string;
+}
+
 interface OverviewData {
-  jobs: any;
-  categories: any;
-  feedback: any;
-  contact: any;
-  categoryRequests: any;
+  jobs: JobsOverview;
+  categories: CategoriesOverview;
+  feedback: FeedbackOverview;
+  contact: ContactOverview;
+  categoryRequests: CategoryRequestsOverview;
 }
 
 interface JobsAnalytics {
@@ -182,7 +209,7 @@ export default function Analytics() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label
                   outerRadius={100}
                   fill={COLORS.primary}
                   dataKey="value"
@@ -229,7 +256,7 @@ export default function Analytics() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label
                   outerRadius={100}
                   fill={COLORS.primary}
                   dataKey="value"
@@ -311,7 +338,7 @@ export default function Analytics() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label
                       outerRadius={100}
                       fill={COLORS.primary}
                       dataKey="value"

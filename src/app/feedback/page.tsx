@@ -25,6 +25,23 @@ interface CategoryRequest {
   updated_at: string;
 }
 
+interface FeedbackApiResponse {
+  success: boolean;
+  data: FeedbackItem[];
+}
+
+interface CategoryRequestsApiResponse {
+  success: boolean;
+  data: CategoryRequest[];
+}
+
+interface ActionResponse {
+  success: boolean;
+  error?: {
+    message?: string;
+  };
+}
+
 export default function Feedback() {
   const [activeTab, setActiveTab] = useState<'feedback' | 'suggestions'>('feedback');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -44,7 +61,7 @@ export default function Feedback() {
   const fetchFeedback = async () => {
     try {
       setIsLoading(true);
-      const data = await apiGet('/api/feedback');
+      const data = await apiGet<FeedbackApiResponse>('/api/feedback');
       
       if (data.success) {
         setAllFeedback(data.data);
@@ -59,7 +76,7 @@ export default function Feedback() {
   const fetchCategoryRequests = async () => {
     try {
       setIsLoading(true);
-      const data = await apiGet('/api/category-requests');
+      const data = await apiGet<CategoryRequestsApiResponse>('/api/category-requests');
       
       if (data.success) {
         setAllSuggestions(data.data);
@@ -75,7 +92,7 @@ export default function Feedback() {
     const icon = iconInput[id] || '🏷️';
     
     try {
-      const data = await apiPut(`/api/category-requests/${id}/approve`, { icon });
+      const data = await apiPut<ActionResponse>(`/api/category-requests/${id}/approve`, { icon });
 
       if (data.success) {
         alert('Category request approved and category created!');
@@ -95,7 +112,7 @@ export default function Feedback() {
     }
 
     try {
-      const data = await apiPut(`/api/category-requests/${id}/reject`, {});
+      const data = await apiPut<ActionResponse>(`/api/category-requests/${id}/reject`, {});
 
       if (data.success) {
         await fetchCategoryRequests();
@@ -114,7 +131,7 @@ export default function Feedback() {
     }
 
     try {
-      const data = await apiDelete(`/api/category-requests/${id}`);
+      const data = await apiDelete<ActionResponse>(`/api/category-requests/${id}`);
 
       if (data.success) {
         await fetchCategoryRequests();
@@ -129,7 +146,7 @@ export default function Feedback() {
 
   const handleApproveFeedback = async (id: number) => {
     try {
-      const data = await apiPut(`/api/feedback/${id}/approve`, {});
+      const data = await apiPut<ActionResponse>(`/api/feedback/${id}/approve`, {});
 
       if (data.success) {
         await fetchFeedback();
@@ -148,7 +165,7 @@ export default function Feedback() {
     }
 
     try {
-      const data = await apiPut(`/api/feedback/${id}/reject`, {});
+      const data = await apiPut<ActionResponse>(`/api/feedback/${id}/reject`, {});
 
       if (data.success) {
         await fetchFeedback();
@@ -167,7 +184,7 @@ export default function Feedback() {
     }
 
     try {
-      const data = await apiDelete(`/api/feedback/${id}`);
+      const data = await apiDelete<ActionResponse>(`/api/feedback/${id}`);
 
       if (data.success) {
         await fetchFeedback();

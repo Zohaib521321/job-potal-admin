@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 
 interface Admin {

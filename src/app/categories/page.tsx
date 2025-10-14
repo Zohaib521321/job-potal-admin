@@ -14,6 +14,7 @@ interface Category {
   status: string;
   created_at: string;
   updated_at: string;
+  subscriber_count?: number;
 }
 
 interface CategoriesApiResponse {
@@ -37,6 +38,7 @@ export default function Categories() {
   const [formData, setFormData] = useState({ name: '', description: '', icon: '🏷️' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [subscriberCounts, setSubscriberCounts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     fetchCategories();
@@ -49,6 +51,23 @@ export default function Categories() {
       
       if (data.success) {
         setCategories(data.data);
+        
+        // Fetch subscriber counts for each category
+        data.data.forEach(async (category) => {
+          try {
+            const subscriberData = await apiGet<{ success: boolean; data: { total_subscribers: number } }>(
+              `/api/categories/${category.id}/subscribers`
+            );
+            if (subscriberData.success) {
+              setSubscriberCounts(prev => ({
+                ...prev,
+                [category.id]: subscriberData.data.total_subscribers
+              }));
+            }
+          } catch (err) {
+            console.error(`Error fetching subscribers for category ${category.id}:`, err);
+          }
+        });
       } else {
         setError('Failed to load categories');
       }
@@ -224,7 +243,7 @@ export default function Categories() {
                 </h3>
                 <p className="text-text-secondary text-sm mb-4 line-clamp-2">{category.description}</p>
 
-                <div className="flex items-center justify-between mb-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="flex items-center gap-2 text-text-secondary">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -233,21 +252,42 @@ export default function Categories() {
                       <span className="font-semibold text-foreground">{category.job_count}</span> jobs
                     </span>
                   </div>
+                  <div className="flex items-center gap-2 text-text-secondary">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span className="text-sm">
+                      <span className="font-semibold text-foreground">{subscriberCounts[category.id] || 0}</span> alerts
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-accent">
-                  <button 
-                    onClick={() => handleOpenModal(category)}
-                    className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary font-medium px-4 py-2 rounded-lg transition-all duration-200"
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(category.id, category.name)}
-                    className="bg-error/10 hover:bg-error/20 text-error font-medium px-4 py-2 rounded-lg transition-all duration-200"
-                  >
-                    Delete
-                  </button>
+                <div className="space-y-2 pt-4 border-t border-accent">
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleOpenModal(category)}
+                      className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary font-medium px-4 py-2 rounded-lg transition-all duration-200 text-sm"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(category.id, category.name)}
+                      className="bg-error/10 hover:bg-error/20 text-error font-medium px-4 py-2 rounded-lg transition-all duration-200 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  {subscriberCounts[category.id] > 0 && (
+                    <button
+                      onClick={() => window.location.href = `/job-alerts?category=${category.id}`}
+                      className="w-full bg-accent hover:bg-accent/70 text-foreground font-medium px-4 py-2 rounded-lg transition-all duration-200 text-sm flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                      </svg>
+                      View Subscribers ({subscriberCounts[category.id]})
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

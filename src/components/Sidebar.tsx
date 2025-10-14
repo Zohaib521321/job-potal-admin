@@ -15,6 +15,7 @@ export default function Sidebar() {
     { href: '/', label: 'Dashboard', icon: '📊', requiresSuperAdmin: false },
     { href: '/jobs', label: 'Jobs', icon: '💼', requiresSuperAdmin: false },
     { href: '/categories', label: 'Categories', icon: '🏷️', requiresSuperAdmin: false },
+    { href: '/job-alerts', label: 'Job Alerts', icon: '🔔', requiresSuperAdmin: false },
     { href: '/feedback', label: 'Feedback', icon: '💬', requiresSuperAdmin: false },
     { href: '/contact', label: 'Contact', icon: '📧', requiresSuperAdmin: false },
     { href: '/analytics', label: 'Analytics', icon: '📈', requiresSuperAdmin: false },

@@ -98,13 +98,13 @@ export default function Login() {
           </form>
 
           {/* Default Credentials Info (Remove in production) */}
-          <div className="mt-6 p-4 bg-accent rounded-lg border border-primary/20">
+          {/* <div className="mt-6 p-4 bg-accent rounded-lg border border-primary/20">
             <p className="text-text-secondary text-xs mb-2">
               <strong className="text-foreground">Default Credentials:</strong>
             </p>
             <p className="text-text-secondary text-xs">Email: admin@jobportal.com</p>
             <p className="text-text-secondary text-xs">Password: admin123</p>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

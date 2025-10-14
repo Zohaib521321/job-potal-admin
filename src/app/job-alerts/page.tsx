@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { apiGet, apiDelete } from '@/lib/api';
@@ -36,7 +36,7 @@ interface CategoriesResponse {
   data: Category[];
 }
 
-export default function JobAlerts() {
+function JobAlertsContent() {
   const searchParams = useSearchParams();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -345,6 +345,24 @@ export default function JobAlerts() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function JobAlerts() {
+  return (
+    <Suspense fallback={
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 ml-64 p-8">
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <p className="text-text-secondary mt-4">Loading...</p>
+          </div>
+        </main>
+      </div>
+    }>
+      <JobAlertsContent />
+    </Suspense>
   );
 }
 

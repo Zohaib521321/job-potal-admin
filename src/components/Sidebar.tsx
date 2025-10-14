@@ -1,15 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSettings } from '@/contexts/SettingsContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { admin, logout } = useAuth();
-  const { settings } = useSettings();
+  const { theme } = useTheme();
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: '📊', requiresSuperAdmin: false },
@@ -20,7 +21,6 @@ export default function Sidebar() {
     { href: '/contact', label: 'Contact', icon: '📧', requiresSuperAdmin: false },
     { href: '/analytics', label: 'Analytics', icon: '📈', requiresSuperAdmin: false },
     { href: '/admins', label: 'Admins', icon: '👨‍💼', requiresSuperAdmin: true },
-    { href: '/settings', label: 'Settings', icon: '⚙️', requiresSuperAdmin: true },
   ];
 
   // Filter menu items based on admin role
@@ -34,17 +34,16 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-background border-r border-accent min-h-screen fixed left-0 top-0">
       <div className="p-6">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
-            <span className="text-background font-bold text-2xl">
-              {(settings.site_name || 'JobPortal').charAt(0).toUpperCase()}
-            </span>
-          </div>
+        <Link href="/" className="flex items-center space-x-3">
+          <Image
+            src={theme === 'dark' ? '/logo_dark.png' : '/logo_light.png'}
+            alt="Job Hunt Logo"
+            width={180}
+            height={180}
+            className="object-contain"
+          />
           <div>
-            <span className="text-foreground font-semibold text-xl block">
-              {settings.site_name || 'JobPortal'}
-            </span>
-            <span className="text-text-secondary text-xs">Admin Panel</span>
+           
           </div>
         </Link>
       </div>

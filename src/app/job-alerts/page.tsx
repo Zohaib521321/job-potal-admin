@@ -113,10 +113,12 @@ export default function JobAlerts() {
     }
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-    fetchSubscriptions();
-  };
+  // Search handler - resets page and fetches subscriptions
+  // Disabled for now as search is done via filteredSubscriptions
+  // const handleSearch = () => {
+  //   setCurrentPage(1);
+  //   fetchSubscriptions();
+  // };
 
   const filteredSubscriptions = subscriptions.filter(sub => 
     searchTerm === '' || 

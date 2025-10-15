@@ -10,7 +10,7 @@ import ThemeToggle from './ThemeToggle';
 export default function Sidebar() {
   const pathname = usePathname();
   const { admin, logout } = useAuth();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: '📊', requiresSuperAdmin: false },
@@ -36,7 +36,7 @@ export default function Sidebar() {
       <div className="p-6">
         <Link href="/" className="flex items-center space-x-3">
           <Image
-            src={theme === 'dark' ? '/logo_dark.png' : '/logo_light.png'}
+            src={resolvedTheme === 'dark' ? '/logo_dark.png' : '/logo_light.png'}
             alt="Job Hunt Logo"
             width={180}
             height={180}

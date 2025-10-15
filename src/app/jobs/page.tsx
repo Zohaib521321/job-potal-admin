@@ -262,20 +262,9 @@ export default function Jobs() {
     }
     
     // Add application methods if available
-    const applyMethods = [];
-    if (job.contact_email) {
-      applyMethods.push(`📧 Email: ${job.contact_email}`);
-    }
-    if (job.whatsapp) {
-      applyMethods.push(`📱 WhatsApp: ${job.whatsapp}`);
-    }
-    if (job.apply_link) {
-      applyMethods.push(`🔗 Apply: ${job.apply_link}`);
-    }
     
-    if (applyMethods.length > 0) {
-      post += `\n📬 How to Apply:\n${applyMethods.join('\n')}\n`;
-    }
+    
+   
     
     // Add website link
     post += `\n🔗 View Full Details: https://jobhunt.pk/jobs/${job.id}\n`;

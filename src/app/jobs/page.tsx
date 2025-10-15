@@ -237,18 +237,18 @@ export default function Jobs() {
     <div className="flex">
       <Sidebar />
       
-      <main className="flex-1 ml-64 p-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+      <main className="flex-1 lg:ml-56 p-4 md:p-6 lg:p-8">
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Jobs Management</h1>
-              <p className="text-text-secondary">Manage all job listings</p>
+              <h1 className="text-2xl font-bold text-foreground mb-1">Jobs Management</h1>
+              <p className="text-text-secondary text-sm">Manage all job listings</p>
             </div>
             <button 
               onClick={() => handleOpenModal()}
-              className="bg-primary hover:bg-primary-dark text-background font-semibold px-6 py-3 rounded-lg transition-all duration-200 flex items-center gap-2"
+              className="bg-primary hover:bg-primary-dark text-background font-semibold px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add New Job
@@ -256,8 +256,8 @@ export default function Jobs() {
           </div>
 
           {/* Filters */}
-          <div className="bg-surface rounded-lg p-6 shadow-lg border border-accent mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
+          <div className="bg-surface rounded-lg p-4 shadow-lg border border-accent mb-4">
+            <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 flex gap-2">
                 <input
                   type="text"
@@ -265,11 +265,11 @@ export default function Jobs() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="flex-1 bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                  className="flex-1 bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                 />
                 <button
                   onClick={handleSearch}
-                  className="bg-primary hover:bg-primary-dark text-background font-semibold px-6 py-3 rounded-lg transition-all duration-200"
+                  className="bg-primary hover:bg-primary-dark text-background font-semibold px-4 py-2 rounded-lg transition-all duration-200 text-sm"
                 >
                   Search
                 </button>
@@ -277,7 +277,7 @@ export default function Jobs() {
               <select
                 value={filterStatus}
                 onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-                className="bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                className="bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -288,22 +288,22 @@ export default function Jobs() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-surface rounded-lg p-4 border border-accent">
-              <p className="text-text-secondary text-sm mb-1">Total Jobs</p>
-              <p className="text-2xl font-bold text-foreground">{jobs.length}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-surface rounded-lg p-3 border border-accent">
+              <p className="text-text-secondary text-xs mb-1">Total Jobs</p>
+              <p className="text-xl font-bold text-foreground">{jobs.length}</p>
             </div>
-            <div className="bg-surface rounded-lg p-4 border border-accent">
-              <p className="text-text-secondary text-sm mb-1">Active</p>
-              <p className="text-2xl font-bold text-success">{jobs.filter(j => j.status === 'active').length}</p>
+            <div className="bg-surface rounded-lg p-3 border border-accent">
+              <p className="text-text-secondary text-xs mb-1">Active</p>
+              <p className="text-xl font-bold text-success">{jobs.filter(j => j.status === 'active').length}</p>
             </div>
-            <div className="bg-surface rounded-lg p-4 border border-accent">
-              <p className="text-text-secondary text-sm mb-1">Pending</p>
-              <p className="text-2xl font-bold text-primary">{jobs.filter(j => j.status === 'pending').length}</p>
+            <div className="bg-surface rounded-lg p-3 border border-accent">
+              <p className="text-text-secondary text-xs mb-1">Pending</p>
+              <p className="text-xl font-bold text-primary">{jobs.filter(j => j.status === 'pending').length}</p>
             </div>
-            <div className="bg-surface rounded-lg p-4 border border-accent">
-              <p className="text-text-secondary text-sm mb-1">Closed</p>
-              <p className="text-2xl font-bold text-error">{jobs.filter(j => j.status === 'closed').length}</p>
+            <div className="bg-surface rounded-lg p-3 border border-accent">
+              <p className="text-text-secondary text-xs mb-1">Closed</p>
+              <p className="text-xl font-bold text-error">{jobs.filter(j => j.status === 'closed').length}</p>
             </div>
           </div>
 
@@ -316,40 +316,40 @@ export default function Jobs() {
           ) : (
             <>
               {/* Jobs Table */}
-              <div className="bg-surface rounded-lg shadow-lg border border-accent overflow-hidden mb-6">
+              <div className="bg-surface rounded-lg shadow-lg border border-accent overflow-hidden mb-4">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-accent">
                       <tr>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Job Title</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Company</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Category</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Priority</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Location</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Type</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Status</th>
-                        <th className="text-left text-foreground font-semibold px-6 py-4">Actions</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Job Title</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Company</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Category</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Priority</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Location</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Type</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Status</th>
+                        <th className="text-left text-foreground font-semibold px-4 py-3 text-xs">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {jobs.map((job) => (
                         <tr key={job.id} className="border-t border-accent hover:bg-accent/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="text-foreground font-medium">{job.title}</p>
-                            <p className="text-text-secondary text-sm">{job.salary_range || 'Not specified'}</p>
+                          <td className="px-4 py-3">
+                            <p className="text-foreground font-medium text-sm">{job.title}</p>
+                            <p className="text-text-secondary text-xs">{job.salary_range || 'Not specified'}</p>
                           </td>
-                          <td className="px-6 py-4 text-text-secondary">{job.company_name}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-3 text-text-secondary text-sm">{job.company_name}</td>
+                          <td className="px-4 py-3">
                             {job.category_name ? (
-                              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                              <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
                                 {job.category_name}
                               </span>
                             ) : (
-                              <span className="text-text-secondary text-sm">None</span>
+                              <span className="text-text-secondary text-xs">None</span>
                             )}
                           </td>
-                          <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
                               job.priority === 'high' ? 'bg-error/10 text-error' :
                               job.priority === 'medium' ? 'bg-primary/10 text-primary' :
                               job.priority === 'low' ? 'bg-accent text-text-secondary' :
@@ -361,15 +361,15 @@ export default function Jobs() {
                                '⚪ Normal'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-text-secondary">{job.location || 'Remote'}</td>
-                          <td className="px-6 py-4">
-                            <span className="text-text-secondary text-sm capitalize">{job.job_type}</span>
+                          <td className="px-4 py-3 text-text-secondary text-sm">{job.location || 'Remote'}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-text-secondary text-xs capitalize">{job.job_type}</span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-3">
                             <select
                               value={job.status}
                               onChange={(e) => handleUpdateStatus(job.id, e.target.value)}
-                              className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${
+                              className={`px-2 py-1 rounded-full text-[10px] font-medium border-0 cursor-pointer ${
                                 job.status === 'active'
                                   ? 'bg-success/10 text-success'
                                   : job.status === 'pending'
@@ -382,23 +382,23 @@ export default function Jobs() {
                               <option value="closed">Closed</option>
                             </select>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex gap-2">
+                          <td className="px-4 py-3">
+                            <div className="flex gap-1">
                               <button 
                                 onClick={() => handleOpenModal(job)}
-                                className="text-foreground hover:text-primary transition-colors p-2"
+                                className="text-foreground hover:text-primary transition-colors p-1"
                                 title="Edit"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               </button>
                               <button 
                                 onClick={() => handleDelete(job.id, job.title)}
-                                className="text-error hover:text-error/80 transition-colors p-2"
+                                className="text-error hover:text-error/80 transition-colors p-1"
                                 title="Delete"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                               </button>
@@ -465,22 +465,22 @@ export default function Jobs() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-surface rounded-lg p-8 max-w-2xl w-full my-8">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-foreground mb-4">
               {editingJob ? 'Edit Job' : 'Add New Job'}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 bg-error/10 border border-error rounded-lg text-error text-sm">
+              <div className="mb-3 p-2 bg-error/10 border border-error rounded-lg text-error text-xs">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Job Title *
                   </label>
                   <input
@@ -488,13 +488,13 @@ export default function Jobs() {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="e.g., Senior Frontend Developer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Company Name *
                   </label>
                   <input
@@ -502,32 +502,32 @@ export default function Jobs() {
                     value={formData.company_name}
                     onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                     required
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="e.g., TechCorp Inc."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Location
                   </label>
                   <input
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="e.g., San Francisco, CA or Remote"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Category
                   </label>
                   <select
                     value={formData.category_id}
                     onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                   >
                     <option value="">No Category</option>
                     {categories.map((cat) => (
@@ -539,13 +539,13 @@ export default function Jobs() {
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Job Type
                   </label>
                   <select
                     value={formData.job_type}
                     onChange={(e) => setFormData({ ...formData, job_type: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                   >
                     <option value="full-time">Full-time</option>
                     <option value="contract">Contract</option>
@@ -555,102 +555,102 @@ export default function Jobs() {
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Salary Range
                   </label>
                   <input
                     type="text"
                     value={formData.salary_range}
                     onChange={(e) => setFormData({ ...formData, salary_range: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="e.g., $120k - $160k"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Priority
                   </label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                   >
                     <option value="high">🔴 High (Top Priority)</option>
                     <option value="medium">🟡 Medium</option>
                     <option value="normal">⚪ Normal (Default)</option>
                     <option value="low">⚫ Low</option>
                   </select>
-                  <p className="text-text-secondary text-xs mt-1">High priority jobs appear at the top of listings</p>
+                  <p className="text-text-secondary text-[10px] mt-1">High priority jobs appear at the top of listings</p>
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Contact Email
                   </label>
                   <input
                     type="email"
                     value={formData.contact_email}
                     onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="contact@company.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     WhatsApp
                   </label>
                   <input
                     type="tel"
                     value={formData.whatsapp}
                     onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Apply Link (URL)
                   </label>
                   <input
                     type="url"
                     value={formData.apply_link}
                     onChange={(e) => setFormData({ ...formData, apply_link: e.target.value })}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors"
                     placeholder="https://company.com/apply"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-foreground font-medium mb-2">
+                  <label className="block text-foreground font-medium mb-1 text-sm">
                     Job Description *
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
-                    rows={6}
-                    className="w-full bg-background text-foreground border border-accent rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors resize-none"
+                    rows={5}
+                    className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors resize-none"
                     placeholder="Detailed job description, requirements, responsibilities..."
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 pt-3">
                 <button
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="flex-1 bg-accent hover:bg-accent/80 text-foreground font-medium px-4 py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
+                  className="flex-1 bg-accent hover:bg-accent/80 text-foreground font-medium px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-primary hover:bg-primary-dark text-background font-semibold px-4 py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
+                  className="flex-1 bg-primary hover:bg-primary-dark text-background font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 text-sm"
                 >
                   {isSubmitting ? 'Saving...' : editingJob ? 'Update Job' : 'Create Job'}
                 </button>

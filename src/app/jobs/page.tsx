@@ -233,6 +233,63 @@ export default function Jobs() {
     }
   };
 
+  const handleCopyLinkedInPost = (job: Job) => {
+    // Build LinkedIn-style post
+    let post = `🎯 ${job.title}\n\n`;
+    
+    if (job.company_name) {
+      post += `🏢 Company: ${job.company_name}\n`;
+    }
+    
+    if (job.location) {
+      post += `📍 Location: ${job.location}\n`;
+    }
+    
+    if (job.job_type) {
+      post += `💼 Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n`;
+    }
+    
+    if (job.salary_range) {
+      post += `💰 Salary: ${job.salary_range}\n`;
+    }
+    
+    if (job.category_name) {
+      post += `🏷️ Category: ${job.category_name}\n`;
+    }
+    
+    if (job.description) {
+      post += `\n📋 Description:\n${job.description}\n`;
+    }
+    
+    // Add application methods if available
+    const applyMethods = [];
+    if (job.contact_email) {
+      applyMethods.push(`📧 Email: ${job.contact_email}`);
+    }
+    if (job.whatsapp) {
+      applyMethods.push(`📱 WhatsApp: ${job.whatsapp}`);
+    }
+    if (job.apply_link) {
+      applyMethods.push(`🔗 Apply: ${job.apply_link}`);
+    }
+    
+    if (applyMethods.length > 0) {
+      post += `\n📬 How to Apply:\n${applyMethods.join('\n')}\n`;
+    }
+    
+    // Add website link
+    post += `\n🔗 View Full Details: https://jobhunt.pk/jobs/${job.id}\n`;
+    post += `\n#JobHunt #Hiring #Jobs #Career #JobOpportunity`;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(post).then(() => {
+      alert('✅ Copied to clipboard!');
+    }).catch((err) => {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy to clipboard');
+    });
+  };
+
   return (
     <div className="flex">
       <Sidebar />
@@ -384,6 +441,15 @@ export default function Jobs() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-1">
+                              <button 
+                                onClick={() => handleCopyLinkedInPost(job)}
+                                className="text-primary hover:text-primary-dark transition-colors p-1"
+                                title="Copy LinkedIn Post"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
                               <button 
                                 onClick={() => handleOpenModal(job)}
                                 className="text-foreground hover:text-primary transition-colors p-1"

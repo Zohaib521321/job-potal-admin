@@ -433,50 +433,44 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
   };
 
   const handleCopyLinkedInPost = (job: Job) => {
-    // Build LinkedIn-style post
-    let post = `🎯 ${job.title}\n\n`;
-    
-    if (job.company_name) {
-      post += `🏢 Company: ${job.company_name}\n`;
-    }
-    
-    if (job.location) {
-      post += `📍 Location: ${job.location}\n`;
-    }
-    
-    if (job.job_type) {
-      post += `💼 Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n`;
-    }
-    
-    if (job.salary_range) {
-      post += `💰 Salary: ${job.salary_range}\n`;
-    }
-    
-    if (job.category_name) {
-      post += `🏷️ Category: ${job.category_name}\n`;
-    }
-    
-    if (job.description) {
-      post += `\n📋 Description:\n${job.description}\n`;
-    }
-    
-    // Add application methods if available
-    
-    
-   
-    
-    // Add website link
-    post += `\n🔗 View Full Details: https://jobhunt.pk/jobs/${job.id}\n`;
-    post += `\n#JobHunt #Hiring #Jobs #Career #JobOpportunity`;
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(post).then(() => {
-      alert('✅ Copied to clipboard!');
-    }).catch((err) => {
+  let post = `${job.title}\n\n`;
+
+  if (job.company_name) {
+    post += `Company: ${job.company_name}\n`;
+  }
+
+  if (job.location) {
+    post += `Location: ${job.location}\n`;
+  }
+
+  if (job.job_type) {
+    post += `Job Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n`;
+  }
+
+  if (job.salary_range) {
+    post += `Salary: ${job.salary_range}\n`;
+  }
+
+  if (job.category_name) {
+    post += `Category: ${job.category_name}\n`;
+  }
+
+  if (job.description) {
+    post += `\nJob Description:\n${job.description}\n`;
+  }
+
+  post += `\nApply now or learn more:\nhttps://jobhunt.pk/jobs/${job.id}\n`;
+  post += `\nStay updated with verified job alerts:\nJoin our WhatsApp channel ➜ https://whatsapp.com/channel/0029Vb6bEhGD8SDqeUdL5b0h\n`;
+  post += `\n#JobHunt #Hiring #Jobs #Career #JobOpportunity #PakistanJobs`;
+
+  navigator.clipboard.writeText(post)
+    .then(() => alert('Copied to clipboard'))
+    .catch((err) => {
       console.error('Failed to copy:', err);
       alert('Failed to copy to clipboard');
     });
-  };
+};
+
 
   return (
     <div className="flex">

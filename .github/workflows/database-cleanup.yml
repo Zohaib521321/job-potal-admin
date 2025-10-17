@@ -1,0 +1,163 @@
+name: Database Cleanup - Cost Saving
+
+on:
+  schedule:
+    # Run at 12:00 AM UTC - Close old jobs (2 weeks)
+    - cron: '0 0 * * *'
+    # Run at 12:00 AM UTC - Delete old jobs (3 weeks)
+    - cron: '0 0 * * *'
+    # Run at 1:00 AM UTC - Delete old contact messages (1 month, not pending)
+    - cron: '0 1 * * *'
+    # Run at 2:00 AM UTC - Delete old feedback (1 month, not pending)
+    - cron: '0 2 * * *'
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      cleanup_type:
+        description: 'Select cleanup type'
+        required: true
+        type: choice
+        options:
+          - 'all'
+          - 'jobs-close'
+          - 'jobs-delete'
+          - 'contact'
+          - 'feedback'
+
+jobs:
+  cleanup-jobs:
+    name: Cleanup Old Jobs
+    runs-on: ubuntu-latest
+    # Run at 12:00 AM (both close and delete)
+    if: github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch' && (github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'jobs-close' || github.event.inputs.cleanup_type == 'jobs-delete')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Close jobs older than 2 weeks
+        if: github.event.inputs.cleanup_type != 'jobs-delete' && github.event.inputs.cleanup_type != 'contact' && github.event.inputs.cleanup_type != 'feedback'
+        run: |
+          echo "🔄 Closing jobs older than 2 weeks..."
+          RESPONSE=$(curl -s -X PUT \
+            -H "x-api-key: ${{ secrets.API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.API_BASE_URL }}/api/jobs/cleanup/close-old")
+          
+          echo "Response: $RESPONSE"
+          
+          # Check if the request was successful
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Successfully closed old jobs"
+            COUNT=$(echo "$RESPONSE" | grep -oP '"count":\K[0-9]+')
+            echo "📊 Jobs closed: $COUNT"
+          else
+            echo "❌ Failed to close old jobs"
+            exit 1
+          fi
+
+      - name: Delete jobs older than 3 weeks
+        if: github.event.inputs.cleanup_type != 'jobs-close' && github.event.inputs.cleanup_type != 'contact' && github.event.inputs.cleanup_type != 'feedback'
+        run: |
+          echo "🗑️  Deleting jobs older than 3 weeks..."
+          RESPONSE=$(curl -s -X DELETE \
+            -H "x-api-key: ${{ secrets.API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.API_BASE_URL }}/api/jobs/cleanup/delete-old")
+          
+          echo "Response: $RESPONSE"
+          
+          # Check if the request was successful
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Successfully deleted old jobs"
+            COUNT=$(echo "$RESPONSE" | grep -oP '"count":\K[0-9]+')
+            echo "📊 Jobs deleted: $COUNT"
+          else
+            echo "❌ Failed to delete old jobs"
+            exit 1
+          fi
+
+  cleanup-contact:
+    name: Cleanup Old Contact Messages
+    runs-on: ubuntu-latest
+    # Run at 1:00 AM
+    if: github.event.schedule == '0 1 * * *' || github.event_name == 'workflow_dispatch' && (github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'contact')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete contact messages older than 1 month
+        run: |
+          echo "🗑️  Deleting contact messages older than 1 month (not pending)..."
+          RESPONSE=$(curl -s -X DELETE \
+            -H "x-api-key: ${{ secrets.API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.API_BASE_URL }}/api/contact/cleanup/delete-old")
+          
+          echo "Response: $RESPONSE"
+          
+          # Check if the request was successful
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Successfully deleted old contact messages"
+            COUNT=$(echo "$RESPONSE" | grep -oP '"count":\K[0-9]+')
+            echo "📊 Contact messages deleted: $COUNT"
+          else
+            echo "❌ Failed to delete old contact messages"
+            exit 1
+          fi
+
+  cleanup-feedback:
+    name: Cleanup Old Feedback
+    runs-on: ubuntu-latest
+    # Run at 2:00 AM
+    if: github.event.schedule == '0 2 * * *' || github.event_name == 'workflow_dispatch' && (github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'feedback')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete feedback older than 1 month
+        run: |
+          echo "🗑️  Deleting feedback older than 1 month (not pending)..."
+          RESPONSE=$(curl -s -X DELETE \
+            -H "x-api-key: ${{ secrets.API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.API_BASE_URL }}/api/feedback/cleanup/delete-old")
+          
+          echo "Response: $RESPONSE"
+          
+          # Check if the request was successful
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Successfully deleted old feedback"
+            COUNT=$(echo "$RESPONSE" | grep -oP '"count":\K[0-9]+')
+            echo "📊 Feedback deleted: $COUNT"
+          else
+            echo "❌ Failed to delete old feedback"
+            exit 1
+          fi
+
+  notify-completion:
+    name: Send Completion Notification
+    runs-on: ubuntu-latest
+    needs: [cleanup-jobs, cleanup-contact, cleanup-feedback]
+    if: always()
+    
+    steps:
+      - name: Check results
+        run: |
+          echo "📊 Cleanup Summary:"
+          echo "- Jobs cleanup: ${{ needs.cleanup-jobs.result }}"
+          echo "- Contact cleanup: ${{ needs.cleanup-contact.result }}"
+          echo "- Feedback cleanup: ${{ needs.cleanup-feedback.result }}"
+          
+          if [ "${{ needs.cleanup-jobs.result }}" == "failure" ] || \
+             [ "${{ needs.cleanup-contact.result }}" == "failure" ] || \
+             [ "${{ needs.cleanup-feedback.result }}" == "failure" ]; then
+            echo "⚠️  Some cleanup tasks failed!"
+            exit 1
+          else
+            echo "✅ All cleanup tasks completed successfully!"
+          fi
+

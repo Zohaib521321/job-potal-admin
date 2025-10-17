@@ -162,19 +162,19 @@ export default function Jobs() {
   const handleSkipAI = () => {
     // Skip AI and show empty form
     setShowAIDialog(false);
-      setFormData({
-        title: '',
-        description: '',
-        location: '',
-        category_id: '',
-        job_type: 'full-time',
-        salary_range: '',
-        company_name: '',
-        contact_email: '',
-        whatsapp: '',
-        apply_link: '',
-        priority: 'normal',
-      });
+    setFormData({
+      title: '',
+      description: '',
+      location: '',
+      category_id: '',
+      job_type: 'full-time',
+      salary_range: '',
+      company_name: '',
+      contact_email: '',
+      whatsapp: '',
+      apply_link: '',
+      priority: 'medium',
+    });
     setShowModal(true);
     setError('');
   };
@@ -339,7 +339,7 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
           contact_email: parsed.contact_email || '',
           whatsapp: parsed.whatsapp || '',
           apply_link: parsed.apply_link || '',
-          priority: 'normal',
+          priority: 'medium',
         });
 
         // Close AI dialog and show form

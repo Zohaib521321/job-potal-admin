@@ -76,6 +76,13 @@ export default function Jobs() {
     priority: 'medium',
   });
 
+  // AI Dialog States
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [rawJobDescription, setRawJobDescription] = useState('');
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [showAIBanner, setShowAIBanner] = useState(false);
+
   useEffect(() => {
     fetchJobs();
     fetchCategories();
@@ -126,6 +133,7 @@ export default function Jobs() {
 
   const handleOpenModal = (job?: Job) => {
     if (job) {
+      // Editing existing job - skip AI dialog
       setEditingJob(job);
       setFormData({
         title: job.title,
@@ -140,8 +148,20 @@ export default function Jobs() {
         apply_link: job.apply_link || '',
         priority: job.priority || 'normal',
       });
+      setShowModal(true);
+      setError('');
     } else {
+      // Adding new job - show AI dialog first
       setEditingJob(null);
+      setRawJobDescription('');
+      setAiError('');
+      setShowAIDialog(true);
+    }
+  };
+
+  const handleSkipAI = () => {
+    // Skip AI and show empty form
+    setShowAIDialog(false);
       setFormData({
         title: '',
         description: '',
@@ -155,15 +175,194 @@ export default function Jobs() {
         apply_link: '',
         priority: 'normal',
       });
-    }
     setShowModal(true);
     setError('');
+  };
+
+  const handleProcessAI = async () => {
+    if (!rawJobDescription.trim()) {
+      setAiError('Please enter a job description');
+      return;
+    }
+
+    setIsProcessingAI(true);
+    setAiError('');
+
+    try {
+      // Build prompt for AI
+      const categoriesList = categories.map(cat => cat.name).join(', ');
+      
+      const prompt = `You are an expert job posting parser. Extract structured information from the following job posting.
+
+IMPORTANT RULES:
+
+1. MULTIPLE JOBS: If there are multiple job positions listed, extract information for ONLY THE FIRST job position mentioned.
+
+2. CATEGORY MATCHING: Choose the BEST matching category from this list: [${categoriesList}]
+   - If no reasonable match exists, return "none"
+
+3. CONTACT INFORMATION: Extract ALL contact methods:
+   - Email addresses (look for @domain patterns)
+   - Phone/WhatsApp numbers (look for patterns like 0311-1234567, +92 311 1234567, or similar)
+   - Application URLs or career page links
+
+4. COMPANY NAME: 
+   - Look for explicit company name mentions (often at the start like "Company X is hiring")
+   - If not found, extract from email domain (e.g., hr@company.com → "Company")
+   - Remove words like "hiring", "is expanding", etc.
+
+5. DESCRIPTION FIELD - This is CRITICAL:
+   - INCLUDE: Job responsibilities, requirements, qualifications, skills needed, experience required, benefits, company background
+   - EXCLUDE: 
+     * Location details
+     * Salary information  
+     * Contact information (email, phone, WhatsApp)
+     * Application instructions (e.g., "send CV to...", "apply at...", "mention position in subject line")
+     * Generic hiring announcements (e.g., "Company is hiring for positions: X, Y, Z")
+   - If the posting ONLY contains a list of positions and contact info with NO actual job details, leave description EMPTY
+   - Only include substantive information about the job role, company, or requirements
+
+6. LOCATION: Extract city/region mentioned (e.g., "Rawalpindi", "Remote", "Lahore")
+
+7. SALARY: Extract salary/compensation mentioned (e.g., "200K", "$80k-100k", "Competitive")
+
+8. JOB TYPE: Determine from context:
+   - "full-time" (default for permanent positions)
+   - "contract" (contractual, project-based)
+   - "remote" (explicitly mentioned remote work)
+   - "internship" (intern positions)
+
+DESCRIPTION EXAMPLES:
+
+Example 1 - BAD (includes application instructions):
+"United Sol is hiring for positions: React Developer, Magento Developer. If you're interested, please share your CV at career@unitedsol.net and mention the position in the subject line."
+❌ This should be EMPTY - no actual job details, just hiring announcement and instructions
+
+Example 2 - GOOD (has actual job content):
+"We're looking for an experienced React Developer to join our growing team. Responsibilities include building scalable web applications, collaborating with designers, and mentoring junior developers. Requirements: 3+ years React experience, strong TypeScript skills, experience with Redux."
+✅ This should be INCLUDED - contains responsibilities and requirements
+
+Example 3 - GOOD (company info + requirements):
+"Zero Lifestyle is expanding and looking for dynamic professionals. The Sales Manager will lead our sales team, develop strategies, and manage client relationships. Must have 5+ years sales experience and proven track record."
+✅ This should be INCLUDED - contains company context and job details
+
+Job Posting:
+${rawJobDescription}
+
+Return your response in this EXACT JSON format (no additional text, no markdown):
+{
+  "title": "job title",
+  "company_name": "company name",
+  "location": "location or empty string",
+  "category": "matching category name or none",
+  "job_type": "full-time|contract|remote|internship",
+  "salary_range": "salary range or empty string",
+  "description": "job responsibilities and requirements ONLY - empty string if no substantive job details exist",
+  "contact_email": "email or empty string",
+  "whatsapp": "phone number or empty string",
+  "apply_link": "application URL or empty string"
+}`;
+
+      const response = await apiPost<{
+        success: boolean;
+        data?: {
+          generatedContent: string;
+        };
+        error?: {
+          message: string;
+        };
+      }>('/api/ai/generateContent', { prompt });
+
+      if (response.success && response.data?.generatedContent) {
+        // Parse AI response
+        const aiContent = response.data.generatedContent;
+        
+        // Extract JSON from response (AI might wrap it in markdown)
+        let jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('Could not parse AI response');
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        // Find matching category ID with fuzzy matching
+        let categoryId = '';
+        if (parsed.category && parsed.category.toLowerCase() !== 'none') {
+          // First try exact match
+          let matchedCategory = categories.find(
+            cat => cat.name.toLowerCase() === parsed.category.toLowerCase()
+          );
+          
+          // If no exact match, try partial match
+          if (!matchedCategory) {
+            matchedCategory = categories.find(
+              cat => cat.name.toLowerCase().includes(parsed.category.toLowerCase()) ||
+                     parsed.category.toLowerCase().includes(cat.name.toLowerCase())
+            );
+          }
+          
+          // If still no match, try keyword matching for common terms
+          if (!matchedCategory) {
+            const categoryLower = parsed.category.toLowerCase();
+            matchedCategory = categories.find(cat => {
+              const catLower = cat.name.toLowerCase();
+              // Sales-related
+              if ((categoryLower.includes('sales') || categoryLower.includes('business development')) && 
+                  catLower.includes('sales')) return true;
+              // Tech-related
+              if ((categoryLower.includes('developer') || categoryLower.includes('engineer') || categoryLower.includes('software')) && 
+                  (catLower.includes('software') || catLower.includes('engineering'))) return true;
+              // Marketing-related
+              if ((categoryLower.includes('marketing') || categoryLower.includes('digital')) && 
+                  catLower.includes('marketing')) return true;
+              // Design-related
+              if ((categoryLower.includes('design') || categoryLower.includes('ui') || categoryLower.includes('ux')) && 
+                  catLower.includes('design')) return true;
+              return false;
+            });
+          }
+          
+          if (matchedCategory) {
+            categoryId = matchedCategory.id.toString();
+          }
+        }
+
+        // Populate form with AI-extracted data
+        setFormData({
+          title: parsed.title || '',
+          description: parsed.description || '',
+          location: parsed.location || '',
+          category_id: categoryId,
+          job_type: parsed.job_type || 'full-time',
+          salary_range: parsed.salary_range || '',
+          company_name: parsed.company_name || '',
+          contact_email: parsed.contact_email || '',
+          whatsapp: parsed.whatsapp || '',
+          apply_link: parsed.apply_link || '',
+          priority: 'normal',
+        });
+
+        // Close AI dialog and show form
+        setShowAIDialog(false);
+    setShowModal(true);
+        setShowAIBanner(true);
+    setError('');
+      } else {
+        setAiError(response.error?.message || 'Failed to process job description');
+      }
+    } catch (err) {
+      console.error('Error processing AI:', err);
+      setAiError('Failed to process job description. Please try again or skip to manual entry.');
+    } finally {
+      setIsProcessingAI(false);
+    }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingJob(null);
     setError('');
+    setShowAIBanner(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -518,6 +717,93 @@ export default function Jobs() {
         </div>
       </main>
 
+      {/* AI Job Description Parser Dialog */}
+      {showAIDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">AI Job Parser</h2>
+                <p className="text-text-secondary text-xs">Paste a job posting and let AI extract the details</p>
+              </div>
+            </div>
+
+            {aiError && (
+              <div className="mb-3 p-3 bg-error/10 border border-error rounded-lg text-error text-sm flex items-start gap-2">
+                <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{aiError}</span>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-foreground font-medium mb-2 text-sm">
+                Paste Job Description
+              </label>
+              <textarea
+                value={rawJobDescription}
+                onChange={(e) => setRawJobDescription(e.target.value)}
+                rows={12}
+                className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-3 focus:outline-none focus:border-primary transition-colors resize-none font-mono"
+                placeholder="Paste the complete job posting here. For example:
+
+Zero Lifestyle is hiring!!!
+
+Open Positions:
+- National Sales Manager
+- Quality Assurance Lead
+- Software & Solution Architect
+
+Contact: hr@zerolifestyle.co"
+              />
+              <p className="text-text-secondary text-xs mt-2">
+                💡 Tip: Include all details (title, company, salary, location, contact info). AI will extract and organize everything automatically.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleSkipAI}
+                disabled={isProcessingAI}
+                className="flex-1 bg-accent hover:bg-accent/80 text-foreground font-medium px-4 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+                Skip & Enter Manually
+              </button>
+              <button
+                type="button"
+                onClick={handleProcessAI}
+                disabled={isProcessingAI || !rawJobDescription.trim()}
+                className="flex-1 bg-primary hover:bg-primary-dark text-background font-semibold px-4 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+              >
+                {isProcessingAI ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Continue with AI
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -525,6 +811,26 @@ export default function Jobs() {
             <h2 className="text-xl font-bold text-foreground mb-4">
               {editingJob ? 'Edit Job' : 'Add New Job'}
             </h2>
+
+            {showAIBanner && !editingJob && (
+              <div className="mb-3 p-3 bg-primary/10 border border-primary rounded-lg flex items-start gap-2">
+                <svg className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-primary font-medium text-sm">✨ AI Pre-filled</p>
+                  <p className="text-text-secondary text-xs mt-1">Fields have been automatically filled. Please review and edit as needed.</p>
+                </div>
+                <button 
+                  onClick={() => setShowAIBanner(false)}
+                  className="text-text-secondary hover:text-foreground transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
 
             {error && (
               <div className="mb-3 p-2 bg-error/10 border border-error rounded-lg text-error text-xs">

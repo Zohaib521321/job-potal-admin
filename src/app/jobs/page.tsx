@@ -73,7 +73,7 @@ export default function Jobs() {
     contact_email: '',
     whatsapp: '',
     apply_link: '',
-    priority: 'normal',
+    priority: 'medium',
   });
 
   useEffect(() => {

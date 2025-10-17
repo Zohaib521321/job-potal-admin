@@ -278,7 +278,7 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
         const aiContent = response.data.generatedContent;
         
         // Extract JSON from response (AI might wrap it in markdown)
-        let jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
           throw new Error('Could not parse AI response');
         }

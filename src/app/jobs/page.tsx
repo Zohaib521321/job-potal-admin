@@ -461,7 +461,7 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
 
   post += `\nApply now or learn more:\nhttps://jobhunt.pk/jobs/${job.id}\n`;
   post += `\nStay updated with verified job alerts:\nJoin our WhatsApp channel ➜ https://whatsapp.com/channel/0029Vb6bEhGD8SDqeUdL5b0h\n`;
-  post += `\n#JobHunt #Hiring #Jobs #Career #JobOpportunity #PakistanJobs`;
+  post += `\n#jobhunt #Hiring #Jobs #Career #JobOpportunity #PakistanJobs`;
 
   navigator.clipboard.writeText(post)
     .then(() => alert('Copied to clipboard'))

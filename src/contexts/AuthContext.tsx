@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Verify token with backend
-      const response = await fetchWithApiKey('/api/auth/verify', {
+      const response = await fetchWithApiKey('/api/auth/verifyAdmin', {
         headers: {
           'Authorization': `Bearer ${storedToken}`,
         },
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const data = await apiPost<AuthLoginResponse>('/api/auth/login', { email, password });
+      const data = await apiPost<AuthLoginResponse>('/api/auth/adminLogin', { email, password });
 
       if (data.success) {
         setAdmin(data.data.admin);

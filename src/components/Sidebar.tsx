@@ -22,6 +22,7 @@ export default function Sidebar() {
     { href: '/feedback', label: 'Feedback', icon: '💬', requiresSuperAdmin: false },
     { href: '/contact', label: 'Contact', icon: '📧', requiresSuperAdmin: false },
     { href: '/analytics', label: 'Analytics', icon: '📈', requiresSuperAdmin: false },
+    { href: '/users', label: 'Users', icon: '👥', requiresSuperAdmin: true },
     { href: '/admins', label: 'Admins', icon: '👨‍💼', requiresSuperAdmin: true },
   ];
 
@@ -80,7 +81,12 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  // Only close menu on mobile (< 1024px)
+                  if (window.innerWidth < 1024) {
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-primary/10 text-primary border-l-4 border-primary'

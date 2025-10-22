@@ -13,6 +13,10 @@ interface Admin {
   role: string;
   created_at: string;
   updated_at: string;
+  google_connected?: boolean;
+  blogger_enabled?: boolean;
+  google_blog_id?: string;
+  google_connected_at?: string;
 }
 
 interface AdminsApiResponse {
@@ -36,6 +40,8 @@ export default function Admins() {
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [googleStatus, setGoogleStatus] = useState<{[key: number]: any}>({});
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState<{[key: number]: boolean}>({});
 
   const [formData, setFormData] = useState({
     username: '',
@@ -59,6 +65,25 @@ export default function Admins() {
       fetchAdmins();
     }
   }, [currentAdmin]);
+
+  // Check for Google OAuth success/error in URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleConnected = urlParams.get('google_connected');
+    const googleError = urlParams.get('google_error');
+    const blogName = urlParams.get('blog_name');
+    
+    if (googleConnected === 'true') {
+      alert(`✅ Successfully connected to Google Blogger! Blog: ${blogName || 'Default'}`);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      fetchAdmins(); // Refresh admin list
+    } else if (googleError === 'true') {
+      alert('❌ Failed to connect to Google. Please try again.');
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const fetchAdmins = async () => {
     try {
@@ -155,6 +180,63 @@ export default function Admins() {
     }
   };
 
+  const handleGoogleConnect = async (adminId: number) => {
+    try {
+      setIsConnectingGoogle(prev => ({ ...prev, [adminId]: true }));
+      
+      console.log('🔗 Initiating Google OAuth for admin:', adminId);
+      const data = await apiGet<{success: boolean; data: {authUrl: string}}>(`/api/oauth/google/connect?admin_id=${adminId}`);
+      
+      console.log('📡 OAuth response:', data);
+      
+      if (data.success && data.data.authUrl) {
+        console.log('✅ Redirecting to Google OAuth:', data.data.authUrl);
+        // Redirect to Google OAuth
+        window.location.href = data.data.authUrl;
+      } else {
+        console.error('❌ OAuth initiation failed:', data);
+        alert('Failed to initiate Google OAuth');
+      }
+    } catch (err) {
+      console.error('❌ Error connecting to Google:', err);
+      alert(`Failed to connect to Google: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsConnectingGoogle(prev => ({ ...prev, [adminId]: false }));
+    }
+  };
+
+  const handleGoogleDisconnect = async (adminId: number) => {
+    if (!confirm('Are you sure you want to disconnect Google Blogger integration?')) {
+      return;
+    }
+
+    try {
+      const data = await apiPost<{success: boolean; message: string}>(`/api/oauth/google/disconnect/${adminId}`);
+      
+      if (data.success) {
+        alert('Google account disconnected successfully');
+        await fetchAdmins();
+      } else {
+        alert('Failed to disconnect Google account');
+      }
+    } catch (err) {
+      console.error('Error disconnecting Google:', err);
+      alert('Failed to disconnect Google account');
+    }
+  };
+
+  const checkGoogleStatus = async (adminId: number) => {
+    try {
+      const data = await apiGet<{success: boolean; data: any}>(`/api/oauth/google/status/${adminId}`);
+      
+      if (data.success) {
+        setGoogleStatus(prev => ({ ...prev, [adminId]: data.data }));
+      }
+    } catch (err) {
+      console.error('Error checking Google status:', err);
+    }
+  };
+
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
     return (
@@ -243,6 +325,7 @@ export default function Admins() {
                     <th className="text-left text-foreground font-semibold px-6 py-4">Admin</th>
                     <th className="text-left text-foreground font-semibold px-6 py-4">Email</th>
                     <th className="text-left text-foreground font-semibold px-6 py-4">Role</th>
+                    <th className="text-left text-foreground font-semibold px-6 py-4">Google Blogger</th>
                     <th className="text-left text-foreground font-semibold px-6 py-4">Created</th>
                     <th className="text-left text-foreground font-semibold px-6 py-4">Actions</th>
                   </tr>
@@ -281,6 +364,47 @@ export default function Admins() {
                             {admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          {admin.google_connected ? (
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
+                                Connected
+                              </span>
+                              <button
+                                onClick={() => handleGoogleDisconnect(admin.id)}
+                                className="text-error hover:text-error/80 transition-colors p-1"
+                                title="Disconnect Google"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleGoogleConnect(admin.id)}
+                              disabled={isConnectingGoogle[admin.id]}
+                              className="bg-primary/10 hover:bg-primary/20 text-primary font-medium px-3 py-1 rounded-full text-xs transition-all duration-200 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {isConnectingGoogle[admin.id] ? (
+                                <>
+                                  <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                  Connecting...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                  </svg>
+                                  Connect Google
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-text-secondary">{createdDate}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
@@ -318,24 +442,53 @@ export default function Admins() {
             </div>
           )}
 
-          {/* Info Card */}
-          <div className="mt-8 bg-surface rounded-lg p-6 border border-accent">
-            <h3 className="text-foreground font-semibold mb-3 flex items-center gap-2">
-              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Admin Roles
-            </h3>
-            <ul className="space-y-2 text-text-secondary text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-error">•</span>
-                <span><strong className="text-foreground">Super Admin:</strong> Full access to all features including admin management</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary">•</span>
-                <span><strong className="text-foreground">Admin:</strong> Access to manage jobs, categories, feedback, and contact messages</span>
-              </li>
-            </ul>
+          {/* Info Cards */}
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-surface rounded-lg p-6 border border-accent">
+              <h3 className="text-foreground font-semibold mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Admin Roles
+              </h3>
+              <ul className="space-y-2 text-text-secondary text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-error">•</span>
+                  <span><strong className="text-foreground">Super Admin:</strong> Full access to all features including admin management</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span><strong className="text-foreground">Admin:</strong> Access to manage jobs, categories, feedback, and contact messages</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-surface rounded-lg p-6 border border-accent">
+              <h3 className="text-foreground font-semibold mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Google Blogger Integration
+              </h3>
+              <ul className="space-y-2 text-text-secondary text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-success">•</span>
+                  <span><strong className="text-foreground">Auto-posting:</strong> New jobs are automatically posted to your Blogger blog</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success">•</span>
+                  <span><strong className="text-foreground">Rich formatting:</strong> Jobs are posted with professional HTML formatting</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success">•</span>
+                  <span><strong className="text-foreground">SEO optimized:</strong> Posts include proper labels and metadata</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success">•</span>
+                  <span><strong className="text-foreground">Branded:</strong> Posts include JobHunt.pk branding and links</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </main>

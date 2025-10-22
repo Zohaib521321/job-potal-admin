@@ -40,7 +40,6 @@ export default function Admins() {
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [googleStatus, setGoogleStatus] = useState<{[key: number]: any}>({});
   const [isConnectingGoogle, setIsConnectingGoogle] = useState<{[key: number]: boolean}>({});
 
   const [formData, setFormData] = useState({
@@ -199,7 +198,8 @@ export default function Admins() {
       }
     } catch (err) {
       console.error('❌ Error connecting to Google:', err);
-      alert(`Failed to connect to Google: ${err.message || 'Unknown error'}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Failed to connect to Google: ${errorMessage}`);
     } finally {
       setIsConnectingGoogle(prev => ({ ...prev, [adminId]: false }));
     }
@@ -225,17 +225,6 @@ export default function Admins() {
     }
   };
 
-  const checkGoogleStatus = async (adminId: number) => {
-    try {
-      const data = await apiGet<{success: boolean; data: any}>(`/api/oauth/google/status/${adminId}`);
-      
-      if (data.success) {
-        setGoogleStatus(prev => ({ ...prev, [adminId]: data.data }));
-      }
-    } catch (err) {
-      console.error('Error checking Google status:', err);
-    }
-  };
 
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {

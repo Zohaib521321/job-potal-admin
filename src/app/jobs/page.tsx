@@ -434,6 +434,7 @@ Return ONLY the description text, no additional formatting or labels.`;
     setError('');
 
     try {
+      // eslint-disable-next-line prefer-const
       let finalFormData = { ...formData };
       
       // Generate description if empty

@@ -192,7 +192,7 @@ export default function Jobs() {
       // Build prompt for AI
       const categoriesList = categories.map(cat => cat.name).join(', ');
       
-      const prompt = `You are an expert job posting parser. Extract structured information from the following job posting.
+      const prompt = `You are an expert job posting parser and content generator. Extract structured information from the following job posting and generate a well-formatted description.
 
 IMPORTANT RULES:
 
@@ -211,16 +211,17 @@ IMPORTANT RULES:
    - If not found, extract from email domain (e.g., hr@company.com → "Company")
    - Remove words like "hiring", "is expanding", etc.
 
-5. DESCRIPTION FIELD - This is CRITICAL:
+5. DESCRIPTION FIELD - This is CRITICAL and MUST be well-formatted:
+   - ALWAYS generate a professional, structured description even if minimal details are provided
+   - Use proper formatting with sections like "About the Role:", "Requirements:", "Responsibilities:", etc.
    - INCLUDE: Job responsibilities, requirements, qualifications, skills needed, experience required, benefits, company background
    - EXCLUDE: 
      * Location details
      * Salary information  
      * Contact information (email, phone, WhatsApp)
      * Application instructions (e.g., "send CV to...", "apply at...", "mention position in subject line")
-     * Generic hiring announcements (e.g., "Company is hiring for positions: X, Y, Z")
-   - If the posting ONLY contains a list of positions and contact info with NO actual job details, leave description EMPTY
-   - Only include substantive information about the job role, company, or requirements
+   - If the posting ONLY contains a list of positions and contact info with NO actual job details, generate a professional description based on the job title and category
+   - Format the description with proper structure, bullet points, and professional language
 
 6. LOCATION: Extract city/region mentioned (e.g., "Rawalpindi", "Remote", "Lahore")
 
@@ -232,19 +233,44 @@ IMPORTANT RULES:
    - "remote" (explicitly mentioned remote work)
    - "internship" (intern positions)
 
-DESCRIPTION EXAMPLES:
+DESCRIPTION FORMATTING EXAMPLES:
 
-Example 1 - BAD (includes application instructions):
-"United Sol is hiring for positions: React Developer, Magento Developer. If you're interested, please share your CV at career@unitedsol.net and mention the position in the subject line."
-❌ This should be EMPTY - no actual job details, just hiring announcement and instructions
+Example 1 - MINIMAL INPUT, GENERATED DESCRIPTION:
+Input: "Company ABC is hiring React Developer. Contact: hr@abc.com"
+Generated Description:
+"About the Role:
+We are seeking a skilled React Developer to join our development team. This role involves building modern web applications and contributing to our growing technology stack.
 
-Example 2 - GOOD (has actual job content):
-"We're looking for an experienced React Developer to join our growing team. Responsibilities include building scalable web applications, collaborating with designers, and mentoring junior developers. Requirements: 3+ years React experience, strong TypeScript skills, experience with Redux."
-✅ This should be INCLUDED - contains responsibilities and requirements
+Key Responsibilities:
+• Develop and maintain React-based web applications
+• Collaborate with cross-functional teams
+• Write clean, maintainable code
+• Participate in code reviews and technical discussions
 
-Example 3 - GOOD (company info + requirements):
-"Zero Lifestyle is expanding and looking for dynamic professionals. The Sales Manager will lead our sales team, develop strategies, and manage client relationships. Must have 5+ years sales experience and proven track record."
-✅ This should be INCLUDED - contains company context and job details
+Requirements:
+• Experience with React.js and modern JavaScript
+• Understanding of web development fundamentals
+• Strong problem-solving skills
+• Ability to work in a team environment"
+
+Example 2 - DETAILED INPUT, ENHANCED DESCRIPTION:
+Input: "Looking for Senior Developer with 3+ years experience in React, Node.js. Must have strong communication skills."
+Generated Description:
+"About the Role:
+We are looking for a Senior Developer to join our dynamic team. This position offers the opportunity to work on cutting-edge projects and mentor junior developers.
+
+Key Responsibilities:
+• Lead development of React and Node.js applications
+• Mentor junior team members
+• Collaborate with product and design teams
+• Implement best practices and coding standards
+
+Requirements:
+• 3+ years of professional development experience
+• Strong proficiency in React.js and Node.js
+• Excellent communication and leadership skills
+• Experience with modern development tools and practices
+• Bachelor's degree in Computer Science or related field preferred"
 
 Job Posting:
 ${rawJobDescription}
@@ -257,7 +283,7 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
   "category": "matching category name or none",
   "job_type": "full-time|contract|remote|internship",
   "salary_range": "salary range or empty string",
-  "description": "job responsibilities and requirements ONLY - empty string if no substantive job details exist",
+  "description": "well-formatted professional description with proper structure and sections",
   "contact_email": "email or empty string",
   "whatsapp": "phone number or empty string",
   "apply_link": "application URL or empty string"
@@ -365,19 +391,75 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
     setShowAIBanner(false);
   };
 
+  const generateShortDescription = async (title: string, categoryName?: string, companyName?: string) => {
+    try {
+      const prompt = `Generate a short, professional job description for the following position:
+
+Job Title: ${title}
+Company: ${companyName || 'Our company'}
+Category: ${categoryName || 'General'}
+
+Requirements:
+- Generate a concise, engaging description (2-3 sentences)
+- Include key responsibilities and requirements
+- Use professional language
+- Make it appealing to potential candidates
+- Focus on the most important aspects of the role
+
+Return ONLY the description text, no additional formatting or labels.`;
+
+      const response = await apiPost<{
+        success: boolean;
+        data?: {
+          generatedContent: string;
+        };
+        error?: {
+          message: string;
+        };
+      }>('/api/ai/generateContent', { prompt });
+
+      if (response.success && response.data?.generatedContent) {
+        return response.data.generatedContent.trim();
+      }
+      return null;
+    } catch (err) {
+      console.error('Error generating description:', err);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
 
     try {
+      let finalFormData = { ...formData };
+      
+      // Generate description if empty
+      if (!finalFormData.description.trim()) {
+        const selectedCategory = categories.find(cat => cat.id.toString() === formData.category_id);
+        const generatedDescription = await generateShortDescription(
+          finalFormData.title,
+          selectedCategory?.name,
+          finalFormData.company_name
+        );
+        
+        if (generatedDescription) {
+          finalFormData.description = generatedDescription;
+        } else {
+          // Fallback description
+          finalFormData.description = `We are seeking a skilled ${finalFormData.title} to join our team. This role offers excellent growth opportunities and the chance to work on exciting projects.`;
+        }
+      }
+
       const url = editingJob
         ? `/api/jobs/${editingJob.id}`
         : '/api/jobs';
 
       const body = {
-        ...formData,
-        category_id: formData.category_id ? parseInt(formData.category_id) : null,
+        ...finalFormData,
+        category_id: finalFormData.category_id ? parseInt(finalFormData.category_id) : null,
       };
 
       const data = editingJob 
@@ -433,43 +515,135 @@ Return your response in this EXACT JSON format (no additional text, no markdown)
   };
 
   const handleCopyLinkedInPost = (job: Job) => {
-  let post = `${job.title}\n\n`;
+    // Generate dynamic hashtags based on job details
+    const generateHashtags = () => {
+      const baseHashtags = ['#jobhunt', '#Hiring', '#Jobs', '#Career', '#JobOpportunity', '#PakistanJobs'];
+      const dynamicHashtags = [];
+      
+      // Add company-specific hashtag
+      if (job.company_name) {
+        const companyTag = job.company_name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (companyTag.length > 0) {
+          dynamicHashtags.push(`#${companyTag}`);
+        }
+      }
+      
+      // Add category-specific hashtags
+      if (job.category_name) {
+        const categoryTag = job.category_name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (categoryTag.length > 0) {
+          dynamicHashtags.push(`#${categoryTag}`);
+        }
+      }
+      
+      // Add job type hashtags
+      if (job.job_type) {
+        const jobTypeTag = job.job_type.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (jobTypeTag.length > 0) {
+          dynamicHashtags.push(`#${jobTypeTag}`);
+        }
+      }
+      
+      // Add location hashtags
+      if (job.location && job.location.toLowerCase() !== 'remote') {
+        const locationTag = job.location.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (locationTag.length > 0) {
+          dynamicHashtags.push(`#${locationTag}`);
+        }
+      }
+      
+      // Add technology-specific hashtags based on title
+      const titleLower = job.title.toLowerCase();
+      if (titleLower.includes('react')) dynamicHashtags.push('#React');
+      if (titleLower.includes('node')) dynamicHashtags.push('#NodeJS');
+      if (titleLower.includes('javascript')) dynamicHashtags.push('#JavaScript');
+      if (titleLower.includes('python')) dynamicHashtags.push('#Python');
+      if (titleLower.includes('java')) dynamicHashtags.push('#Java');
+      if (titleLower.includes('php')) dynamicHashtags.push('#PHP');
+      if (titleLower.includes('laravel')) dynamicHashtags.push('#Laravel');
+      if (titleLower.includes('vue')) dynamicHashtags.push('#VueJS');
+      if (titleLower.includes('angular')) dynamicHashtags.push('#Angular');
+      if (titleLower.includes('flutter')) dynamicHashtags.push('#Flutter');
+      if (titleLower.includes('react native')) dynamicHashtags.push('#ReactNative');
+      if (titleLower.includes('shopify')) dynamicHashtags.push('#Shopify');
+      if (titleLower.includes('wordpress')) dynamicHashtags.push('#WordPress');
+      if (titleLower.includes('sales')) dynamicHashtags.push('#Sales');
+      if (titleLower.includes('marketing')) dynamicHashtags.push('#Marketing');
+      if (titleLower.includes('design')) dynamicHashtags.push('#Design');
+      if (titleLower.includes('ui') || titleLower.includes('ux')) dynamicHashtags.push('#UIUX');
+      if (titleLower.includes('devops')) dynamicHashtags.push('#DevOps');
+      if (titleLower.includes('data')) dynamicHashtags.push('#DataScience');
+      if (titleLower.includes('mobile')) dynamicHashtags.push('#MobileDevelopment');
+      if (titleLower.includes('frontend')) dynamicHashtags.push('#Frontend');
+      if (titleLower.includes('backend')) dynamicHashtags.push('#Backend');
+      if (titleLower.includes('full stack')) dynamicHashtags.push('#FullStack');
+      
+      return [...baseHashtags, ...dynamicHashtags].join(' ');
+    };
 
-  if (job.company_name) {
-    post += `Company: ${job.company_name}\n`;
-  }
+    // Create engaging opening line
+    const createOpeningLine = () => {
+      const company = job.company_name || 'A leading company';
+      const title = job.title;
+      return `Exciting Opportunity at ${company} for ${title}!`;
+    };
 
-  if (job.location) {
-    post += `Location: ${job.location}\n`;
-  }
+    // Generate compelling description snippet
+    const generateDescriptionSnippet = () => {
+      if (!job.description) {
+        return `Join our dynamic team and take your career to the next level!`;
+      }
+      
+      // Extract first meaningful sentence or create one
+      const sentences = job.description.split(/[.!?]+/).filter(s => s.trim().length > 20);
+      if (sentences.length > 0) {
+        const firstSentence = sentences[0].trim();
+        if (firstSentence.length > 10 && firstSentence.length < 150) {
+          return firstSentence + '.';
+        }
+      }
+      
+      // Fallback descriptions based on category
+      const categoryDescriptions: { [key: string]: string } = {
+        'Software Development': 'Join our innovative development team and work on cutting-edge projects!',
+        'Frontend Development': 'Build amazing user experiences with modern web technologies!',
+        'Backend Development': 'Architect scalable solutions and work with the latest backend technologies!',
+        'Mobile Development': 'Create mobile apps that users love on iOS and Android platforms!',
+        'Sales': 'Drive business growth and build lasting client relationships!',
+        'Marketing': 'Create compelling campaigns and grow our brand presence!',
+        'Design': 'Design beautiful and functional user interfaces!'
+      };
+      
+      return categoryDescriptions[job.category_name || ''] || 'Join our dynamic team and take your career to the next level!';
+    };
 
-  if (job.job_type) {
-    post += `Job Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n`;
-  }
+    let post = `${createOpeningLine()}\n\n`;
+    post += `Company: ${job.company_name}\n\n`;
+    
+    if (job.location) {
+      post += `Location: ${job.location}\n\n`;
+    }
+    
+    post += `Job Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n\n`;
+    
+    if (job.category_name) {
+      post += `Category: ${job.category_name}\n\n`;
+    }
+    
+    post += `${generateDescriptionSnippet()}\n\n`;
+    post += `Apply now or find out more about this opportunity:\n\n`;
+    post += `https://jobhunt.pk/jobs/${job.id}\n\n`;
+    post += `Don't miss out on future job alerts:\n\n`;
+    post += `Stay connected with us on our WhatsApp channel ➜ https://whatsapp.com/channel/0029Vb6bEhGD8SDqeUdL5b0h\n\n`;
+    post += generateHashtags();
 
-  if (job.salary_range) {
-    post += `Salary: ${job.salary_range}\n`;
-  }
-
-  if (job.category_name) {
-    post += `Category: ${job.category_name}\n`;
-  }
-
-  if (job.description) {
-    post += `\nJob Description:\n${job.description}\n`;
-  }
-
-  post += `\nApply now or learn more:\nhttps://jobhunt.pk/jobs/${job.id}\n`;
-  post += `\nStay updated with verified job alerts:\nJoin our WhatsApp channel ➜ https://whatsapp.com/channel/0029Vb6bEhGD8SDqeUdL5b0h\n`;
-  post += `\n#jobhunt #Hiring #Jobs #Career #JobOpportunity #PakistanJobs`;
-
-  navigator.clipboard.writeText(post)
-    .then(() => alert('Copied to clipboard'))
-    .catch((err) => {
-      console.error('Failed to copy:', err);
-      alert('Failed to copy to clipboard');
-    });
-};
+    navigator.clipboard.writeText(post)
+      .then(() => alert('LinkedIn post copied to clipboard!'))
+      .catch((err) => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy to clipboard');
+      });
+  };
 
 
   return (
@@ -990,6 +1164,9 @@ Contact: hr@zerolifestyle.co"
                     className="w-full bg-background text-foreground text-sm border border-accent rounded-lg px-3 py-2 focus:outline-none focus:border-primary transition-colors resize-none"
                     placeholder="Detailed job description, requirements, responsibilities..."
                   />
+                  <p className="text-text-secondary text-xs mt-1">
+                    💡 Leave empty to auto-generate a professional description based on job title and category
+                  </p>
                 </div>
               </div>
 

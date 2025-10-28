@@ -192,7 +192,7 @@ export default function Jobs() {
       // Build prompt for AI
       const categoriesList = categories.map(cat => cat.name).join(', ');
       
-      const prompt = `You are an expert job posting parser and content generator. Extract structured information from the following job posting and generate a well-formatted description.
+      const prompt = `You are an expert job posting parser and content generator. Extract structured information from the following job posting and generate a concise, well-formatted description.
 
 IMPORTANT RULES:
 
@@ -211,17 +211,18 @@ IMPORTANT RULES:
    - If not found, extract from email domain (e.g., hr@company.com → "Company")
    - Remove words like "hiring", "is expanding", etc.
 
-5. DESCRIPTION FIELD - This is CRITICAL and MUST be well-formatted:
+5. DESCRIPTION FIELD - This is CRITICAL and MUST be concise:
    - ALWAYS generate a professional, structured description even if minimal details are provided
    - Use proper formatting with sections like "About the Role:", "Requirements:", "Responsibilities:", etc.
-   - INCLUDE: Job responsibilities, requirements, qualifications, skills needed, experience required, benefits, company background
+   - LIMIT bullet points to 3-4 maximum per section - keep it concise!
+   - INCLUDE: Job responsibilities, requirements, qualifications, skills needed, experience required
    - EXCLUDE: 
      * Location details
      * Salary information  
      * Contact information (email, phone, WhatsApp)
      * Application instructions (e.g., "send CV to...", "apply at...", "mention position in subject line")
    - If the posting ONLY contains a list of positions and contact info with NO actual job details, generate a professional description based on the job title and category
-   - Format the description with proper structure, bullet points, and professional language
+   - Format the description with proper structure and professional language
 
 6. LOCATION: Extract city/region mentioned (e.g., "Rawalpindi", "Remote", "Lahore")
 
@@ -235,42 +236,37 @@ IMPORTANT RULES:
 
 DESCRIPTION FORMATTING EXAMPLES:
 
-Example 1 - MINIMAL INPUT, GENERATED DESCRIPTION:
+Example 1 - MINIMAL INPUT:
 Input: "Company ABC is hiring React Developer. Contact: hr@abc.com"
 Generated Description:
 "About the Role:
-We are seeking a skilled React Developer to join our development team. This role involves building modern web applications and contributing to our growing technology stack.
+We are seeking a skilled React Developer to join our development team.
 
 Key Responsibilities:
 • Develop and maintain React-based web applications
 • Collaborate with cross-functional teams
 • Write clean, maintainable code
-• Participate in code reviews and technical discussions
 
 Requirements:
 • Experience with React.js and modern JavaScript
-• Understanding of web development fundamentals
 • Strong problem-solving skills
 • Ability to work in a team environment"
 
-Example 2 - DETAILED INPUT, ENHANCED DESCRIPTION:
+Example 2 - DETAILED INPUT:
 Input: "Looking for Senior Developer with 3+ years experience in React, Node.js. Must have strong communication skills."
 Generated Description:
 "About the Role:
-We are looking for a Senior Developer to join our dynamic team. This position offers the opportunity to work on cutting-edge projects and mentor junior developers.
+We are looking for a Senior Developer to join our dynamic team.
 
 Key Responsibilities:
 • Lead development of React and Node.js applications
 • Mentor junior team members
-• Collaborate with product and design teams
 • Implement best practices and coding standards
 
 Requirements:
 • 3+ years of professional development experience
 • Strong proficiency in React.js and Node.js
-• Excellent communication and leadership skills
-• Experience with modern development tools and practices
-• Bachelor's degree in Computer Science or related field preferred"
+• Excellent communication and leadership skills"
 
 Job Posting:
 ${rawJobDescription}

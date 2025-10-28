@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { apiGet, apiPost, apiPut, apiDelete, apiRequest } from '@/lib/api';
+import { apiRequest } from '@/lib/api';
 
 // Types
 interface SafetyAlert {
@@ -42,7 +42,7 @@ interface ApiResponse<T> {
   timestamp: string;
 }
 
-interface PaginatedResponse<T> extends ApiResponse<{
+type PaginatedResponse<T> = ApiResponse<{
   alerts: T[];
   pagination: {
     page: number;
@@ -51,7 +51,7 @@ interface PaginatedResponse<T> extends ApiResponse<{
     totalPages: number;
     hasMore: boolean;
   };
-}> {}
+}>;
 
 export default function SafetyAlertsPage() {
   // State
@@ -93,7 +93,7 @@ export default function SafetyAlertsPage() {
   const clearError = () => setError('');
 
   // Fetch statistics
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const token = getAuthToken();
       if (!token) return;
@@ -113,7 +113,7 @@ export default function SafetyAlertsPage() {
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
-  };
+  }, []);
 
   // Fetch safety alerts
   const fetchAlerts = useCallback(async () => {
@@ -150,8 +150,8 @@ export default function SafetyAlertsPage() {
         setAlerts(response.data.alerts);
         setTotalPages(response.data.pagination.totalPages);
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to fetch safety alerts');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to fetch safety alerts');
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +161,7 @@ export default function SafetyAlertsPage() {
   useEffect(() => {
     fetchAlerts();
     fetchStats();
-  }, [fetchAlerts]);
+  }, [fetchAlerts, fetchStats]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -215,8 +215,8 @@ export default function SafetyAlertsPage() {
           handleCloseModal();
         }
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to save safety alert');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to save safety alert');
     } finally {
       setIsSubmitting(false);
     }
@@ -248,8 +248,8 @@ export default function SafetyAlertsPage() {
         setIsDeleteModalOpen(false);
         setAlertToDelete(null);
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to delete safety alert');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to delete safety alert');
     } finally {
       setIsSubmitting(false);
     }
@@ -279,8 +279,8 @@ export default function SafetyAlertsPage() {
         await fetchAlerts();
         await fetchStats();
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to update alert status');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to update alert status');
     }
   };
 
@@ -661,7 +661,7 @@ export default function SafetyAlertsPage() {
                   <select
                     id="priority"
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
                     className="w-full bg-background border border-accent rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
                   >
                     <option value="low">Low Priority</option>
@@ -678,7 +678,7 @@ export default function SafetyAlertsPage() {
                   <select
                     id="status"
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'published' | 'archived' })}
                     className="w-full bg-background border border-accent rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
                   >
                     <option value="draft">Draft</option>
@@ -696,7 +696,7 @@ export default function SafetyAlertsPage() {
                     <div>
                       <h4 className="font-medium text-primary">Email Notification</h4>
                       <p className="text-sm text-foreground mt-1">
-                        This alert will be sent to all verified users when saved as "Published".
+                        This alert will be sent to all verified users when saved as &quot;Published&quot;.
                       </p>
                     </div>
                   </div>

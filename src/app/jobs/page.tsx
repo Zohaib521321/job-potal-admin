@@ -7,6 +7,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 
 interface Job {
   id: number;
+  slug: string;
   title: string;
   company_name: string;
   location: string;
@@ -614,24 +615,31 @@ Return ONLY the description text, no additional formatting or labels.`;
       return categoryDescriptions[job.category_name || ''] || 'Join our dynamic team and take your career to the next level!';
     };
 
+    const jobSlug = job.slug || job.id.toString();
+    const jobUrl = `https://jobhunt.pk/jobs/${jobSlug}`;
+    const whatsappChannelLink = 'https://whatsapp.com/channel/0029Vb6bEhGD8SDqeUdL5b0h';
+    const whatsappCommunityLink = 'https://chat.whatsapp.com/LAg94FEueclEeyoHBayRD7?mode=wwt';
+    const whatsappSupportNumber = '+923056022699';
+
     let post = `${createOpeningLine()}\n\n`;
-    post += `Company: ${job.company_name}\n\n`;
+    post += `🏢 Company: ${job.company_name}\n\n`;
     
     if (job.location) {
-      post += `Location: ${job.location}\n\n`;
+      post += `📍 Location: ${job.location}\n\n`;
     }
     
-    post += `Job Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n\n`;
+    post += `💼 Job Type: ${job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}\n\n`;
     
     if (job.category_name) {
-      post += `Category: ${job.category_name}\n\n`;
+      post += `🏷️ Category: ${job.category_name}\n\n`;
     }
     
     post += `${generateDescriptionSnippet()}\n\n`;
-    post += `Apply now or find out more about this opportunity:\n\n`;
-    post += `https://jobhunt.pk/jobs/${job.id}\n\n`;
-    post += `Don't miss out on future job alerts:\n\n`;
-    post += `Stay connected with us on our WhatsApp channel ➜ https://whatsapp.com/channel/0029Vb6bEhGD8SDqeUdL5b0h\n\n`;
+    post += `🔗 Apply now or learn more:\n\n`;
+    post += `${jobUrl}\n\n`;
+    post += `📢 Stay updated via our WhatsApp channel: ${whatsappChannelLink}\n`;
+    post += `📣 Join our WhatsApp community for important announcements: ${whatsappCommunityLink}\n`;
+    post += `💬 Need help? Chat with us on WhatsApp: ${whatsappSupportNumber}\n\n`;
     post += generateHashtags();
 
     navigator.clipboard.writeText(post)
